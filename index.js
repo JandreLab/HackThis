@@ -3,16 +3,15 @@ const tesseract = require("node-tesseract-ocr");
 const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 const sharp = require("sharp");
 
-let results = [],
-  res = [];
+let results = []
 
 function getItems() {
     //rename
     let ima = fse.readdirSync("images");
     ima = ima.filter(elem => elem !== '.DS_Store')
     ima.forEach((element, index) => {
-        
-        let newName = index + '.png'
+
+        let newName = index + '.jpg'
         fse.renameSync(`images/${element}`, `images/${newName}`)
     });
   return fse.readdirSync("images");
@@ -57,8 +56,13 @@ function OpenALPR(originalImage) {
     xhr.send(file); // Replace with base64 string of an actual image
     xhr.onreadystatechange = function() {
       if (xhr.readyState == 4) {
-        results.push(JSON.parse(xhr.responseText).results[0].plate);
-        line += JSON.parse(xhr.responseText).results[0].plate
+        if(JSON.parse(xhr.responseText).results !== undefined){
+            results.push(JSON.parse(xhr.responseText).results[0].plate);
+            line += JSON.parse(xhr.responseText).results[0].plate
+        }
+        else{
+            console.log("Could not read plate")
+        }
         writeLine(line)
       } else {
         console.log("Waiting on response...");

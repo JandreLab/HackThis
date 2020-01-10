@@ -1,71 +1,68 @@
 const fse = require("fs-extra");
 const tesseract = require("node-tesseract-ocr");
 const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-let results = []
-const sharp = require('sharp');
+const sharp = require("sharp");
 
-function OpenALPR()
-{
-    let originalImage = 'images/image (1).png';
+let results = [],
+  res = [];
 
-// file name for cropped image
-let outputImage = 'res/image (1).png';
-
-sharp(originalImage).extract({ width: 400, height: 36, left: 1100, top: 1070 }).toFile(outputImage)
-    .then(function(new_file_info) {
-        console.log("Image cropped and saved");
-    })
-    .catch(function(err) {
-        console.log(err);
-    });
-var secret_key = "sk_73dc60d13cc6aa1ff8b9a613";
-var url = "https://api.openalpr.com/v2/recognize_bytes?recognize_vehicle=1&country=za&secret_key=" + secret_key;
-var xhr = new XMLHttpRequest();
-xhr.open("POST", url);
-
-var file = new Buffer(fse.readFileSync("images/image (1).png")).toString('base64'); 
-// console.log(file)
-
-// Send POST data and display response
-xhr.send(file);  // Replace with base64 string of an actual image
-xhr.onreadystatechange = function() {
-    if (xhr.readyState == 4) {
-        results.push(JSON.parse(xhr.responseText).results[0].plate)
-        console.log(results)
-        // document.getElementById("response").innerHTML = xhr.responseText;
-    } else {
-        console.log("Waiting on response...")
-        // document.getElementById("response").innerHTML = "Waiting on response...";
-    }
+function getItems() {
+  return fse.readdirSync("images");
 }
-}
-OpenALPR()
-let res = []
 
 async function tes(img) {
-  return await tesseract
-    .recognize(`./images/${img}`)
+    console.log(img)
+tesseract
+    .recognize(`${img}`)
     .then(text => {
-      // console.log("Result:", text)
-      res.push(text)
-      return text;
+      res.push(text);
+      console.log(text);
     })
     .catch(error => {
       return error.message;
     });
 }
 
-function getItems() {
-  return fse.readdirSync("images");
-}
+function OpenALPR(originalImage) {
+  // file name for cropped image
+  let images = getItems();
+  images = images.slice(1, images.length);
+  var url =
+    "https://api.openalpr.com/v2/recognize_bytes?recognize_vehicle=0&country=za&secret_key=sk_73dc60d13cc6aa1ff8b9a613";
 
-async function main() {
-  let photos = getItems();
-  photos.forEach(element => {
-     tes(element);
+  images.forEach(element => {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+
+    console.log(element);
+    var file = new Buffer(fse.readFileSync("images/" + element)).toString(
+      "base64"
+    );
+
+    xhr.send(file); // Replace with base64 string of an actual image
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState == 4) {
+        console.log(JSON.parse(xhr.responseText))
+        results.push(JSON.parse(xhr.responseText).results[0].plate);
+        console.log(results);
+        console.log("bla", res);
+      } else {
+        console.log("Waiting on response...");
+      }
+    };
+
+    let outputImage = "res/" + element;
+    sharp("images/" + element)
+      .extract({ width: 400, height: 36, left: 1100, top: 1070 })
+      .toFile(outputImage)
+      .then(function(new_file_info) {
+        tes(outputImage);
+        console.log("Image cropped and saved");
+      })
+      .catch(function(err) {
+        console.log(err);
+      });
   });
-
-  console.log(res);
 }
 
-main();
+OpenALPR();

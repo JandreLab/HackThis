@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,10 @@
   "bugs": {
     "url": "https://github.com/JandreLab/HackThis/issues"
   },
-  "homepage": "https://github.com/JandreLab/HackThis#readme"
+  "homepage": "https://github.com/JandreLab/HackThis#readme",
+  "dependencies": {
+    "fs-extra": "^8.1.0",
+    "image-clipper": "^0.4.4",
+    "node-tesseract-ocr": "^1.0.0"
+  }
 }

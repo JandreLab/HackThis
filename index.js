@@ -7,16 +7,30 @@ let results = [],
   res = [];
 
 function getItems() {
+    //rename
+    let ima = fse.readdirSync("images");
+    ima = ima.filter(elem => elem !== '.DS_Store')
+    ima.forEach((element, index) => {
+        
+        let newName = index + '.png'
+        fse.renameSync(`images/${element}`, `images/${newName}`)
+    });
   return fse.readdirSync("images");
 }
 
-async function tes(img) {
-    console.log(img)
-tesseract
-    .recognize(`${img}`)
+function writeLine(line){
+    let split = line.split(',')
+    fse.appendFileSync('res.csv', "\n" + (split[1] == split[2] ? line += line + ",true" : line += line + ",false"));
+}
+
+function tes(img) {
+    return tesseract.recognize(`${img}`)
     .then(text => {
-      res.push(text);
-      console.log(text);
+        let r = new RegExp(/\s/g);
+        let cleanText = text.replace(r, "")
+        cleanText = cleanText.replace("PlateNo.:", "")
+        return cleanText
+      
     })
     .catch(error => {
       return error.message;
@@ -26,11 +40,12 @@ tesseract
 function OpenALPR(originalImage) {
   // file name for cropped image
   let images = getItems();
-  images = images.slice(1, images.length);
   var url =
     "https://api.openalpr.com/v2/recognize_bytes?recognize_vehicle=0&country=za&secret_key=sk_73dc60d13cc6aa1ff8b9a613";
 
+
   images.forEach(element => {
+    let line = element + ',';
     var xhr = new XMLHttpRequest();
     xhr.open("POST", url);
 
@@ -42,10 +57,9 @@ function OpenALPR(originalImage) {
     xhr.send(file); // Replace with base64 string of an actual image
     xhr.onreadystatechange = function() {
       if (xhr.readyState == 4) {
-        console.log(JSON.parse(xhr.responseText))
         results.push(JSON.parse(xhr.responseText).results[0].plate);
-        console.log(results);
-        console.log("bla", res);
+        line += JSON.parse(xhr.responseText).results[0].plate
+        writeLine(line)
       } else {
         console.log("Waiting on response...");
       }
@@ -56,8 +70,7 @@ function OpenALPR(originalImage) {
       .extract({ width: 400, height: 36, left: 1100, top: 1070 })
       .toFile(outputImage)
       .then(function(new_file_info) {
-        tes(outputImage);
-        console.log("Image cropped and saved");
+        tes(outputImage).then(res => line += res + ',');
       })
       .catch(function(err) {
         console.log(err);
